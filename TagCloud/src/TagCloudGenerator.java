@@ -35,7 +35,8 @@ public final class TagCloudGenerator {
                 Map.Pair<String, Integer> o2) {
             int o1Count = o1.value();
             int o2Count = o2.value();
-            return Integer.compare(o1Count, o2Count);
+            return Integer.compare(o2Count, o1Count);
+
         }
     }
 
@@ -52,7 +53,7 @@ public final class TagCloudGenerator {
                 Map.Pair<String, Integer> o2) {
             String o1Key = o1.key();
             String o2Key = o2.key();
-            return (-1 * o1Key.compareTo(o2Key));
+            return (o1Key.compareTo(o2Key));
         }
     }
 
@@ -63,15 +64,16 @@ public final class TagCloudGenerator {
      */
     public static void generateSeparators(Set<Character> separators) {
         // Method to generate the separators Set
-
-        separators.add(',');
-        separators.add('\t');
-        separators.add(';');
-        separators.add('.');
+        String sOfSep = ",-.!?[]\';:/()";
+        int len = sOfSep.length();
+        for (int i = 0; i < len; i++) {
+            separators.add(sOfSep.charAt(i));
+        }
         separators.add('\n');
-        separators.add('-');
         separators.add('\r');
-        separators.add('?');
+        separators.add('\t');
+        separators.add('*');
+        separators.add('_');
 
     }
 
@@ -226,11 +228,10 @@ public final class TagCloudGenerator {
      * @param out
      *            : output stream
      */
-    private static void addWordToCloud(String word, int count,
-            SimpleWriter out) {
-        out.println(
-                "<span style=\"cursor:default\" class=\"f28\" title=\"count: "
-                        + count + "415\"> " + word + "</span>");
+    private static void addWordToCloud(String word, int count, SimpleWriter out,
+            int curDivision) {
+        out.println("<span style=\"cursor:default\" class=\"f" + curDivision
+                + "\" title=\"count: " + count + "\"> " + word + "</span>");
     }
 
     private static void endHTMLFile(SimpleWriter out) {
@@ -262,17 +263,28 @@ public final class TagCloudGenerator {
                 countSort);
         SortingMachine<Map.Pair<String, Integer>> descCount = new SortingMachine2<Map.Pair<String, Integer>>(
                 descSort);
+
         for (Map.Pair<String, Integer> val : wordCounter) {
             sortCounts.add(val);
+
         }
         sortCounts.changeToExtractionMode();
         generateHTML(outputFile, filename);
+        int max = 0;
         for (int i = 0; i < nWords; i++) {
-            descCount.add(sortCounts.removeFirst());
+            Map.Pair<String, Integer> val = sortCounts.removeFirst();
+            if (i == 0) {
+                max = val.value();
+            }
+            descCount.add(val);
         }
         descCount.changeToExtractionMode();
-        for (Map.Pair<String, Integer> pair : descCount) {
-            addWordToCloud(pair.key(), pair.value(), outputFile);
+        int divisions = (max - 1) / 37;
+        for (int i = 0; i < nWords; i++) {
+
+            Map.Pair<String, Integer> pair = descCount.removeFirst();
+            int curDivision = pair.value() / divisions;
+            addWordToCloud(pair.key(), pair.value(), outputFile, curDivision);
         }
         inFile.close();
         outputFile.close();
