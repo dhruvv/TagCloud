@@ -71,6 +71,7 @@ public final class TagCloudGenerator {
         separators.add('\n');
         separators.add('-');
         separators.add('\r');
+        separators.add('?');
 
     }
 
@@ -227,7 +228,14 @@ public final class TagCloudGenerator {
      */
     private static void addWordToCloud(String word, int count,
             SimpleWriter out) {
-        out.println();
+        out.println(
+                "<span style=\"cursor:default\" class=\"f28\" title=\"count: "
+                        + count + "415\"> " + word + "</span>");
+    }
+
+    private static void endHTMLFile(SimpleWriter out) {
+        out.println(
+                "</p>\r\n" + "</div>\r\n" + "</body>\r\n" + "</html>\r\n" + "");
     }
 
     /**
@@ -242,6 +250,8 @@ public final class TagCloudGenerator {
         out.println(
                 "Please enter the name of the file, including the extension.\n");
         String filename = in.nextLine();
+        out.println("Please enter the number of words to be included");
+        int nWords = in.nextInteger();
         SimpleReader inFile = new SimpleReader1L(filename);
         SimpleWriter outputFile = new SimpleWriter1L("output.html");
         Map<String, Integer> wordCounter = new Map2<String, Integer>();
@@ -250,12 +260,20 @@ public final class TagCloudGenerator {
         Comparator<Map.Pair<String, Integer>> descSort = new MapPairDescSort();
         SortingMachine<Map.Pair<String, Integer>> sortCounts = new SortingMachine2<Map.Pair<String, Integer>>(
                 countSort);
+        SortingMachine<Map.Pair<String, Integer>> descCount = new SortingMachine2<Map.Pair<String, Integer>>(
+                descSort);
         for (Map.Pair<String, Integer> val : wordCounter) {
             sortCounts.add(val);
         }
         sortCounts.changeToExtractionMode();
         generateHTML(outputFile, filename);
-
+        for (int i = 0; i < nWords; i++) {
+            descCount.add(sortCounts.removeFirst());
+        }
+        descCount.changeToExtractionMode();
+        for (Map.Pair<String, Integer> pair : descCount) {
+            addWordToCloud(pair.key(), pair.value(), outputFile);
+        }
         inFile.close();
         outputFile.close();
         in.close();
